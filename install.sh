@@ -140,6 +140,9 @@ REPO_ONLY=${REPO_ONLY:-0}
 NO_AUTOSTART=${NO_AUTOSTART:-0}
 SBX=${SBX:-0}
 
+# Provide a helpful usage statement when --help or any invalid argument is passed
+# to the script. Exit code deliberately not included here as error depends on
+# argument provided.
 usage() {
 	echo
 	echo "USAGE: "
