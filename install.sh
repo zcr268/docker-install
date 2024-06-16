@@ -139,6 +139,14 @@ DRY_RUN=${DRY_RUN:-}
 REPO_ONLY=${REPO_ONLY:-0}
 NO_AUTOSTART=${NO_AUTOSTART:-0}
 SBX=${SBX:-0}
+
+usage() {
+	echo
+	echo "USAGE: "
+	echo "    ${0} [--channel <stable|test>] [--mirror <Aliyun|AzureChinaCloud>] [--version <VERSION>] [--dry-run] [--help]"
+	echo
+}
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--channel)
@@ -163,8 +171,13 @@ while [ $# -gt 0 ]; do
 		--no-autostart)
 			NO_AUTOSTART=1
 			;;
+		--help)
+			usage
+			exit 0
+			;;
 		--*)
 			echo "Illegal option $1"
+			usage
 			exit 1
 			;;
 	esac
