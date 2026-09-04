@@ -157,7 +157,8 @@ yum -y install shadow-utils46-newxidmap"
 	fi
 
 	# iptables dependency check
-	if [ -z "$SKIP_IPTABLES" ] && ! command -v iptables >/dev/null 2>&1 && [ ! -f /sbin/iptables ] && [ ! -f /usr/sbin/iptables ]; then
+	iptables_command=$(PATH=$PATH:/sbin:/usr/sbin command -v iptables 2> /dev/null) || :
+	if [ -z "$SKIP_IPTABLES" ] && [ -z "$iptables_command" ]; then
 		if command -v apt-get >/dev/null 2>&1; then
 			INSTRUCTIONS="${INSTRUCTIONS}
 apt-get -y install iptables"
@@ -171,9 +172,24 @@ dnf -y install iptables"
 	fi
 
 	# ip_tables module dependency check
-	if [ -z "$SKIP_IPTABLES" ] && ! lsmod | grep ip_tables >/dev/null 2>&1 && ! grep -q ip_tables "/lib/modules/$(uname -r)/modules.builtin"; then
+	#
+	# some systems use nf_tables instead of ip_tables
+	# so we set nf_tables as the default and check iptables --version
+	# to find out if client is using nf_tables
+	# note that iptables --version doesn't check currently loaded
+	# modules, it just outputs what it was compiled for
+	# we do not check further to avoid complex logic
+	#
+	# https://github.com/moby/moby/blob/864598f8c2677189e308eb4a3b3c0dd41fc06599/contrib/dockerd-rootless-setuptool.sh
+	# uses the same logic
+	iptables_module="nf_tables"
+	if [ -z "$SKIP_IPTABLES" ] && [ -n "$iptables_command" ] && "$iptables_command" --version | grep -q "legacy"; then
+		iptables_module="ip_tables"
+	fi
+
+	if [ -z "$SKIP_IPTABLES" ] && ! lsmod | grep -q "$iptables_module" && ! grep -q "$iptables_module" "/lib/modules/$(uname -r)/modules.builtin"; then
 			INSTRUCTIONS="${INSTRUCTIONS}
-modprobe ip_tables"
+modprobe $iptables_module"
 	fi
 
 	# debian requires setting unprivileged_userns_clone
